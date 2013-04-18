@@ -35,6 +35,7 @@ python << EOF
 import os
 import vim
 
+CTAGS_OUT = 'tags'
 CSCOPE_OUT = 'cscope.out'
 PYCSCOPE_OUT = 'pycscope.out'
 
@@ -60,15 +61,20 @@ def LocateIndexDatabaseFile(file_name):
       path = os.path.join(db_path, file_name)
       if os.path.exists(path):
         return (path, db_path)
-      db_path = os.path.dirname(base_path)
+      db_path = os.path.dirname(db_path)
   else:
     # Start searching in the .git directory.
     path = os.path.join(db_path, file_name)
     if os.path.exists(path):
       return (path, os.path.dirname(db_path))
-  
+
   return (None, None)
 
+# Load ctags index database.
+ctags_db, _ = LocateIndexDatabaseFile(CTAGS_OUT)
+if ctags_db:
+  vim.command('set tags+=%s' % ctags_db)
+  print 'Loaded ctags database.'
 
 # Load cscope index database.
 cscope_db, base_path = LocateIndexDatabaseFile(CSCOPE_OUT)
@@ -79,11 +85,13 @@ if cscope_db is None:
     base_path = ''
 if cscope_db:
   vim.command('cs add %s %s' % (cscope_db, base_path))
+  print 'Loaded cscope database.'
 
 # Load pycscope index database.
 pycscope_db, base_path = LocateIndexDatabaseFile(PYCSCOPE_OUT)
 if pycscope_db:
   vim.command('cs add %s %s' % (pycscope_db, base_path))
+  print 'Loaded pycscope database.'
 
 EOF
 endfunction
@@ -186,7 +194,7 @@ if os.path.exists(base_path):
         cwd=base_path)
 
   vim.command('cs reset')
-  print 'Cscope, pycscope, and ctags updated.'
+  vim.command('call ConnectCscopeDatabase()')
 
 EOF
 endfunction
