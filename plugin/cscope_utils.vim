@@ -13,7 +13,11 @@ while curr_dir and curr_dir != '/':
   git_path = os.path.join(curr_dir, '.git')
   if os.path.exists(git_path):
     vim.command('return %r' % git_path)
+    break
   curr_dir = os.path.dirname(curr_dir)
+
+if not curr_dir or curr_dir == '/':
+  vim.command('return %r' % os.path.realpath('.'))
 
 EOF
 endfunction
@@ -25,22 +29,54 @@ python << EOF
 import os
 import vim
 
-db_path = vim.eval('FindGitRepoPath()') or '.'
-base_path = os.path.dirname(db_path)
+CSCOPE_OUT = 'cscope.out'
+PYCSCOPE_OUT = 'pycscope.out'
+
+
+db_path = vim.eval('FindGitRepoPath()')
+base_path = None
 
 cscope_db = None
-for path in [os.path.join(db_path, 'cscope.out'),  # local repo
-             os.environ.get('CSCOPE_DB', '')  # environment variable
-            ]:
-  if os.path.exists(path):
-    cscope_db = path
-    break
+pycscope_db = None
+
+if not db_path.endswith('.git'):
+  # Start seraching from CWD.
+  base_path = db_path
+  while base_path and base_path != '/':
+    cscope_path = os.path.join(base_path, CSCOPE_OUT)
+    if os.path.exists(cscope_path):
+      cscope_db = cscope_path
+      break
+    base_path = os.path.dirname(base_path)
+else:
+  # Start searching in the .git directory.
+  base_path = os.path.dirname(db_path)
+  for cscope_path in [os.path.join(db_path, CSCOPE_OUT),  # local repo
+                      os.environ.get('CSCOPE_DB', '')  # environment variable
+                     ]:
+    if os.path.exists(cscope_path):
+      cscope_db = cscope_path
+      break
+
 if cscope_db:
   vim.command('cs add %s %s' % (cscope_db, base_path))
 
-pycscope_db = os.path.join(db_path, 'pycscope.out')
-if os.path.exists(pycscope_db):
-  # add pycscope database from local repo
+if not db_path.endswith('.git'):
+  # Start seraching from CWD.
+  base_path = db_path
+  while base_path and base_path != '/':
+    pycscope_path = os.path.join(base_path, PYCSCOPE_OUT)
+    if os.path.exists(pycscope_path):
+      pycscope_db = pycscope_path
+      break
+    base_path = os.path.dirname(base_path)
+else:
+  base_path = os.path.dirname(db_path)
+  pycscope_path = os.path.join(db_path, PYCSCOPE_OUT)
+  if os.path.exists(pycscope_path):
+    pycscope_db = pycscope_path
+
+if pycscope_db:
   vim.command('cs add %s %s' % (pycscope_db, base_path))
 
 EOF
@@ -63,8 +99,9 @@ PYCSCOPE_OUT = 'pycscope.out'
 PYCSCOPE_FILES = 'pycscope.files'
 IGNORE_PATH_FILE = 'ignore_paths'
 
-db_path = vim.eval('FindGitRepoPath()') or '.'
-base_path = os.path.dirname(db_path)
+db_path = vim.eval('FindGitRepoPath()')
+base_path = os.path.dirname(db_path) if db_path.endswith('.git') else db_path
+
 
 class Spawn(Popen):
   def __init__(self, args, cwd=None):
