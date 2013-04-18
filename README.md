@@ -8,10 +8,15 @@ database for you.
 ## To use this plugin, you'll need:
 
 1. vim compiled with cscope ( *--enable-cscope* ) and Python interpreter
-( *--enable-pythoninterp=yes* ) support.
-2. ctags: http://ctags.sourceforge.net/
-3. cscope: http://cscope.sourceforge.net/
-4. pycscope installed: https://github.com/portante/pycscope
+    ( *--enable-pythoninterp=yes* ) support. You probably have to patch your vim
+    because there are some bugs in the base vim-7.3 that crashed vim when
+    running Python inside it: http://www.vim.org/patches.php
+2. I recommend to fetch the latest vim source with mercurial (which includes all
+    the patches), include the above options and any other options you want when
+    doing *./configure*, and build from it: http://www.vim.org/download.php
+3. ctags: http://ctags.sourceforge.net/
+4. cscope: http://cscope.sourceforge.net/
+5. pycscope: https://github.com/portante/pycscope
 
 
 ## How to use it:
@@ -24,7 +29,7 @@ please refer to the Notes section for further information.
 2. Change dir to your source code directory.
 3. Open up vim.
 4. Hit *&lt;leader&gt;cs* to build and load all the database for you.
-5. Open up source files, and happy code tracing with *ctrl + ]*.
+5. Open up source files, and happy code tracing with *ctrl + ]* and *ctrl + T*.
 6. More infos can be found in vim with *:help cscope*.
 
 
