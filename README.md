@@ -7,8 +7,8 @@ database for you.
 
 ## To use this plugin, you'll need:
 
-1. vim compiled with cscope (*--enable-cscope*) and Python interpreter
-    (*--enable-pythoninterp=yes*) support.
+1. vim compiled with cscope ( *--enable-cscope* ) and Python interpreter
+( *--enable-pythoninterp=yes* ) support.
 2. ctags: http://ctags.sourceforge.net/
 3. cscope: http://cscope.sourceforge.net/
 4. pycscope installed: https://github.com/portante/pycscope
@@ -28,8 +28,7 @@ please refer to the Notes section for further information.
 6. More infos can be found in vim with *:help cscope*.
 
 
-## When you hit *&lt;leader&gt;cs* in vim, a function is called to do the
-    following:
+## When you hit *&lt;leader&gt;cs* in vim, a function is called to do the following:
 
 1. Look for the *.git* directory, starting from current working directory and
     going up the directory tree until *.git* is found or '/' is reached.
@@ -41,7 +40,7 @@ please refer to the Notes section for further information.
 
 ## Notes:
 
-1. You can ignore certain paths by creating an 'ignore_paths' file in the *.git*
+1. You can ignore certain paths by creating an *ignore_paths* file in the *.git*
     directory and list all the path patterns you want to ignore in it.
 2. If *.git* directory is not found, then the index database files would be
     created in the current working directory.
