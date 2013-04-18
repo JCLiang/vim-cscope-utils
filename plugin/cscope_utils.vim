@@ -6,6 +6,12 @@
 
 function! FindGitRepoPath()
 python << EOF
+"""Find the path to the .git directory.
+
+Returns:
+  The full path to the .git directory, or current working directory if the .git
+  directory is not found.
+"""
 import os
 
 curr_dir = vim.current.buffer.name or os.getcwd()
@@ -32,50 +38,50 @@ import vim
 CSCOPE_OUT = 'cscope.out'
 PYCSCOPE_OUT = 'pycscope.out'
 
+def LocateIndexDatabaseFile(file_name):
+  """
+  Locates the directory containing the index database file.
 
-db_path = vim.eval('FindGitRepoPath()')
-base_path = None
+  Args:
+    file_name: A string indicating the file name of the index database file to
+        find.
 
-cscope_db = None
-pycscope_db = None
+  Returns:
+    A tuple (db_path_with_file_name, base_path) containing the path to the found
+    file and the base path of the file; or (None, None) if the index database
+    file is not found.
+  """
+  found = False
+  db_path = vim.eval('FindGitRepoPath()')
 
-if not db_path.endswith('.git'):
-  # Start seraching from CWD.
-  base_path = db_path
-  while base_path and base_path != '/':
-    cscope_path = os.path.join(base_path, CSCOPE_OUT)
-    if os.path.exists(cscope_path):
-      cscope_db = cscope_path
-      break
-    base_path = os.path.dirname(base_path)
-else:
-  # Start searching in the .git directory.
-  base_path = os.path.dirname(db_path)
-  for cscope_path in [os.path.join(db_path, CSCOPE_OUT),  # local repo
-                      os.environ.get('CSCOPE_DB', '')  # environment variable
-                     ]:
-    if os.path.exists(cscope_path):
-      cscope_db = cscope_path
-      break
+  if not db_path.endswith('.git'):
+    # Start seraching from CWD.
+    while db_path and db_path != '/':
+      path = os.path.join(db_path, file_name)
+      if os.path.exists(path):
+        return (path, db_path)
+      db_path = os.path.dirname(base_path)
+  else:
+    # Start searching in the .git directory.
+    path = os.path.join(db_path, file_name)
+    if os.path.exists(path):
+      return (path, os.path.dirname(db_path))
+  
+  return (None, None)
 
+
+# Load cscope index database.
+cscope_db, base_path = LocateIndexDatabaseFile(CSCOPE_OUT)
+if cscope_db is None:
+  path = os.environ.get('CSCOPE_DB', '')
+  if os.path.exists(path):
+    cscope_db = cscope_path
+    base_path = ''
 if cscope_db:
   vim.command('cs add %s %s' % (cscope_db, base_path))
 
-if not db_path.endswith('.git'):
-  # Start seraching from CWD.
-  base_path = db_path
-  while base_path and base_path != '/':
-    pycscope_path = os.path.join(base_path, PYCSCOPE_OUT)
-    if os.path.exists(pycscope_path):
-      pycscope_db = pycscope_path
-      break
-    base_path = os.path.dirname(base_path)
-else:
-  base_path = os.path.dirname(db_path)
-  pycscope_path = os.path.join(db_path, PYCSCOPE_OUT)
-  if os.path.exists(pycscope_path):
-    pycscope_db = pycscope_path
-
+# Load pycscope index database.
+pycscope_db, base_path = LocateIndexDatabaseFile(PYCSCOPE_OUT)
 if pycscope_db:
   vim.command('cs add %s %s' % (pycscope_db, base_path))
 
@@ -99,11 +105,9 @@ PYCSCOPE_OUT = 'pycscope.out'
 PYCSCOPE_FILES = 'pycscope.files'
 IGNORE_PATH_FILE = 'ignore_paths'
 
-db_path = vim.eval('FindGitRepoPath()')
-base_path = os.path.dirname(db_path) if db_path.endswith('.git') else db_path
-
 
 class Spawn(Popen):
+  """A wrapper for subprocess.Popen to filter command outputs."""
   def __init__(self, args, cwd=None):
     self.process = Popen(args, stdout=PIPE, stderr=PIPE, close_fds=True,
                          cwd=cwd)
@@ -112,6 +116,17 @@ class Spawn(Popen):
     self.stdout, self.stderr = self.process.communicate()
 
 def ConstructFindArgs(path, patterns, output_file, ignore_paths=None):
+  """A function to construct arguments for the find command.
+
+  Args:
+    path: The path for find to start search with.
+    patterns: A list of file name patterns to search for.
+    output_file: The name of the output file to store the results in.
+    ignore_paths: A list of path name patterns to ignore.
+
+  Returns:
+    A list of arguments that can be used in Spawn or subprocess.Popen directly.
+  """
   cmd = ['find', '%s' % path]
   if ignore_paths:
     cmd += ['(']
@@ -132,6 +147,10 @@ def ConstructFindArgs(path, patterns, output_file, ignore_paths=None):
     first = False
   cmd += [')', '-fprint', '%s' % output_file]
   return cmd
+
+
+db_path = vim.eval('FindGitRepoPath()')
+base_path = os.path.dirname(db_path) if db_path.endswith('.git') else db_path
 
 if os.path.exists(base_path):
   ignore_paths = ['*/.git']
