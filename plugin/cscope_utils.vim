@@ -103,7 +103,7 @@ python << EOF
 
 import os
 import vim
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, CalledProcessError
 
 CTAGS_OUT = 'tags'
 CTAGS_FILES = 'tags.files'
@@ -114,14 +114,12 @@ PYCSCOPE_FILES = 'pycscope.files'
 IGNORE_PATH_FILE = 'ignore_paths'
 
 
-class Spawn(Popen):
+def Spawn(args, cwd=None):
   """A wrapper for subprocess.Popen to filter command outputs."""
-  def __init__(self, args, cwd=None):
-    self.process = Popen(args, stdout=PIPE, stderr=PIPE, close_fds=True,
-                         cwd=cwd)
-    self.stdout = None
-    self.stderr = None
-    self.stdout, self.stderr = self.process.communicate()
+  process = Popen(args, stdout=PIPE, stderr=PIPE, close_fds=True, cwd=cwd)
+  process.stdout, process.stderr = process.communicate()
+  return process
+
 
 def ConstructFindArgs(path, patterns, output_file, ignore_paths=None):
   """A function to construct arguments for the find command.
@@ -168,32 +166,41 @@ if os.path.exists(base_path):
       ignore_paths += [path.strip() for path in f.readlines()]
 
   print 'Building ctags...'
-  ctags_files = os.path.join(db_path, CTAGS_FILES)
-  Spawn(ConstructFindArgs('.', ['*'], ctags_files, ignore_paths=ignore_paths),
-        cwd=base_path)
-  Spawn(['ctags', '-L', '%s' % ctags_files, '--tag-relative=yes', '-f',
-        '%s' % os.path.join(db_path, CTAGS_OUT)],
-        cwd=base_path)
+  try:
+    ctags_files = os.path.join(db_path, CTAGS_FILES)
+    Spawn(ConstructFindArgs('.', ['*'], ctags_files, ignore_paths=ignore_paths),
+          cwd=base_path)
+    Spawn(['ctags', '-L', '%s' % ctags_files, '--tag-relative=yes', '-f',
+          '%s' % os.path.join(db_path, CTAGS_OUT)],
+          cwd=base_path)
+  except CalledProcessError as e:
+    print 'Failed: %s' % e
 
   print 'Building cscope...'
-  cscope_files = os.path.join(db_path, CSCOPE_FILES)
-  Spawn(ConstructFindArgs('.', ['*.c', '*.cc', '*.cpp', '*.h'], cscope_files,
-                          ignore_paths=ignore_paths),
-        cwd=base_path)
-  Spawn(['cscope', '-bqk', '-i', '%s' % cscope_files, '-f',
-         '%s' % os.path.join(db_path, CSCOPE_OUT)],
-        cwd=base_path)
+  try:
+    cscope_files = os.path.join(db_path, CSCOPE_FILES)
+    Spawn(ConstructFindArgs('.', ['*.c', '*.cc', '*.cpp', '*.h'], cscope_files,
+                            ignore_paths=ignore_paths),
+          cwd=base_path)
+    Spawn(['cscope', '-bqk', '-i', '%s' % cscope_files, '-f',
+           '%s' % os.path.join(db_path, CSCOPE_OUT)],
+          cwd=base_path)
+  except CalledProcessError as e:
+    print 'Failed: %s' % e
 
   print 'Building pycscope...'
-  pycscope_files = os.path.join(db_path, PYCSCOPE_FILES)
-  Spawn(ConstructFindArgs('.', ['*.py'], pycscope_files,
-                          ignore_paths=ignore_paths),
-        cwd=base_path)
-  Spawn(['pycscope', '-i', '%s' % pycscope_files,
-         '-f', '%s' % os.path.join(db_path, PYCSCOPE_OUT)],
-        cwd=base_path)
+  try:
+    pycscope_files = os.path.join(db_path, PYCSCOPE_FILES)
+    Spawn(ConstructFindArgs('.', ['*.py'], pycscope_files,
+                            ignore_paths=ignore_paths),
+          cwd=base_path)
+    Spawn(['pycscope', '-i', '%s' % pycscope_files,
+           '-f', '%s' % os.path.join(db_path, PYCSCOPE_OUT)],
+          cwd=base_path)
+  except CalledProcessError as e:
+    print 'Failed: %s' % e
 
-  vim.command('cs reset')
+  vim.command('cs kill -1')
   vim.command('call ConnectCscopeDatabase()')
 
 EOF
