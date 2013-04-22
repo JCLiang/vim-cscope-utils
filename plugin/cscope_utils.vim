@@ -70,6 +70,9 @@ def LocateIndexDatabaseFile(file_name):
 
   return (None, None)
 
+# Kill all cscope connections first.
+vim.command('cs kill -1')
+
 # Load ctags index database.
 ctags_db, _ = LocateIndexDatabaseFile(CTAGS_OUT)
 if ctags_db:
@@ -206,7 +209,6 @@ if os.path.exists(base_path):
   except OSError as e:
     print 'Failed: %s' % e
 
-  vim.command('cs kill -1')
   vim.command('call ConnectCscopeDatabase()')
 
 EOF
