@@ -175,6 +175,8 @@ if os.path.exists(base_path):
           cwd=base_path)
   except CalledProcessError as e:
     print 'Failed: %s' % e
+  except OSError as e:
+    print 'Failed: %s' % e
 
   print 'Building cscope...'
   try:
@@ -187,6 +189,8 @@ if os.path.exists(base_path):
           cwd=base_path)
   except CalledProcessError as e:
     print 'Failed: %s' % e
+  except OSError as e:
+    print 'Failed: %s' % e
 
   print 'Building pycscope...'
   try:
@@ -198,6 +202,8 @@ if os.path.exists(base_path):
            '-f', '%s' % os.path.join(db_path, PYCSCOPE_OUT)],
           cwd=base_path)
   except CalledProcessError as e:
+    print 'Failed: %s' % e
+  except OSError as e:
     print 'Failed: %s' % e
 
   vim.command('cs kill -1')
