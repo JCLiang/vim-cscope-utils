@@ -22,11 +22,51 @@ while curr_dir and curr_dir != '/':
     break
   curr_dir = os.path.dirname(curr_dir)
 
-if not curr_dir or curr_dir == '/':
-  vim.command('return %r' % os.path.realpath('.'))
+vim.command('return %r' % os.path.realpath('.'))
 
 EOF
 endfunction
+
+
+function! GetCurrentGitBranch()
+python << EOF
+"""Get the name of the current git branch.
+
+Returns:
+  The name of the current git branch.
+"""
+import subprocess
+
+try:
+  branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+  vim.command('return %r' % branch.strip())
+except:
+  vim.command('return ""')
+EOF
+endfunction
+
+
+function! GetIndexDatabasePath()
+python << EOF
+"""Get the path to the index database.
+
+The path to the index database is:
+
+  '<git_repo_path|src_path>/<INDEX_DB_DIR>/<current_branch>'
+
+Returns:
+  The path to the index database.
+"""
+import os
+
+INDEX_DB_DIR = 'index_db'
+git_repo_path = vim.eval('FindGitRepoPath()')
+current_branch = vim.eval('GetCurrentGitBranch()')
+vim.command('return %r' % os.path.join(
+    git_repo_path, INDEX_DB_DIR, current_branch))
+EOF
+endfunction
+
 
 " Adds the cscope databse found.
 function! ConnectCscopeDatabase()
@@ -48,52 +88,43 @@ def LocateIndexDatabaseFile(file_name):
         find.
 
   Returns:
-    A tuple (db_path_with_file_name, base_path) containing the path to the found
-    file and the base path of the file; or (None, None) if the index database
-    file is not found.
+    The path to the index database file, or None if the database file could not
+    be found.
   """
-  found = False
-  db_path = vim.eval('FindGitRepoPath()')
-
-  if not db_path.endswith('.git'):
-    # Start seraching from CWD.
-    while db_path and db_path != '/':
-      path = os.path.join(db_path, file_name)
-      if os.path.exists(path):
-        return (path, db_path)
-      db_path = os.path.dirname(db_path)
-  else:
-    # Start searching in the .git directory.
-    path = os.path.join(db_path, file_name)
-    if os.path.exists(path):
-      return (path, os.path.dirname(db_path))
-
-  return (None, None)
+  index_db_path = vim.eval('GetIndexDatabasePath()')
+  file_path = os.path.join(index_db_path, file_name)
+  if file_path:
+    return file_path
+  return None
 
 # Kill all cscope connections first.
 vim.command('cs kill -1')
 
 # Load ctags index database.
-ctags_db, _ = LocateIndexDatabaseFile(CTAGS_OUT)
-if ctags_db:
+ctags_db = LocateIndexDatabaseFile(CTAGS_OUT)
+if ctags_db and os.path.exists(ctags_db):
   vim.command('set tags+=%s' % ctags_db)
   print 'Loaded ctags database.'
 
+git_repo_path = vim.eval('FindGitRepoPath()')
+src_path = (os.path.dirname(git_repo_path) if git_repo_path.endswith('.git')
+             else git_repo_path)
+
 # Load cscope index database.
-cscope_db, base_path = LocateIndexDatabaseFile(CSCOPE_OUT)
+cscope_db = LocateIndexDatabaseFile(CSCOPE_OUT)
 if cscope_db is None:
   path = os.environ.get('CSCOPE_DB', '')
   if os.path.exists(path):
     cscope_db = cscope_path
-    base_path = ''
-if cscope_db:
-  vim.command('cs add %s %s' % (cscope_db, base_path))
+    src_path = ''
+if cscope_db and os.path.exists(cscope_db):
+  vim.command('cs add %s %s' % (cscope_db, src_path))
   print 'Loaded cscope database.'
 
 # Load pycscope index database.
-pycscope_db, base_path = LocateIndexDatabaseFile(PYCSCOPE_OUT)
-if pycscope_db:
-  vim.command('cs add %s %s' % (pycscope_db, base_path))
+pycscope_db = LocateIndexDatabaseFile(PYCSCOPE_OUT)
+if pycscope_db and os.path.exists(pycscope_db):
+  vim.command('cs add %s %s' % (pycscope_db, src_path))
   print 'Loaded pycscope database.'
 
 EOF
@@ -158,24 +189,29 @@ def ConstructFindArgs(path, patterns, output_file, ignore_paths=None):
   return cmd
 
 
-db_path = vim.eval('FindGitRepoPath()')
-base_path = os.path.dirname(db_path) if db_path.endswith('.git') else db_path
+git_repo_path = vim.eval('FindGitRepoPath()')
+db_path = vim.eval('GetIndexDatabasePath()')
+src_path = (os.path.dirname(git_repo_path) if git_repo_path.endswith('.git')
+             else git_repo_path)
 
-if os.path.exists(base_path):
+if os.path.exists(src_path):
   ignore_paths = ['*/.git']
-  ignore_path_file = os.path.join(db_path, IGNORE_PATH_FILE)
+  ignore_path_file = os.path.join(git_repo_path, IGNORE_PATH_FILE)
   if os.path.exists(ignore_path_file):
     with open(ignore_path_file, 'r') as f:
       ignore_paths += [path.strip() for path in f.readlines()]
+
+  if not os.path.exists(db_path):
+    os.makedirs(db_path)
 
   print 'Building ctags...'
   try:
     ctags_files = os.path.join(db_path, CTAGS_FILES)
     Spawn(ConstructFindArgs('.', ['*'], ctags_files, ignore_paths=ignore_paths),
-          cwd=base_path)
+          cwd=src_path)
     Spawn(['ctags', '-L', '%s' % ctags_files, '--tag-relative=yes', '-f',
           '%s' % os.path.join(db_path, CTAGS_OUT)],
-          cwd=base_path)
+          cwd=src_path)
   except CalledProcessError as e:
     print 'Failed: %s' % e
   except OSError as e:
@@ -186,10 +222,10 @@ if os.path.exists(base_path):
     cscope_files = os.path.join(db_path, CSCOPE_FILES)
     Spawn(ConstructFindArgs('.', ['*.c', '*.cc', '*.cpp', '*.h'], cscope_files,
                             ignore_paths=ignore_paths),
-          cwd=base_path)
+          cwd=src_path)
     Spawn(['cscope', '-bqk', '-i', '%s' % cscope_files, '-f',
            '%s' % os.path.join(db_path, CSCOPE_OUT)],
-          cwd=base_path)
+          cwd=src_path)
   except CalledProcessError as e:
     print 'Failed: %s' % e
   except OSError as e:
@@ -200,10 +236,10 @@ if os.path.exists(base_path):
     pycscope_files = os.path.join(db_path, PYCSCOPE_FILES)
     Spawn(ConstructFindArgs('.', ['*.py'], pycscope_files,
                             ignore_paths=ignore_paths),
-          cwd=base_path)
+          cwd=src_path)
     Spawn(['pycscope', '-i', '%s' % pycscope_files,
            '-f', '%s' % os.path.join(db_path, PYCSCOPE_OUT)],
-          cwd=base_path)
+          cwd=src_path)
   except CalledProcessError as e:
     print 'Failed: %s' % e
   except OSError as e:
@@ -215,6 +251,7 @@ EOF
 endfunction
 
 nnoremap <leader>cs :call call(function('BuildCscopeDatabase'), [])<CR>
+nnoremap <leader>cc :call call(function('ConnectCscopeDatabase'), [])<CR>
 
 if has("cscope")
   call ConnectCscopeDatabase()
