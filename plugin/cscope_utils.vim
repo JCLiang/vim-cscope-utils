@@ -21,8 +21,8 @@ while curr_dir and curr_dir != '/':
     vim.command('return %r' % git_path)
     break
   curr_dir = os.path.dirname(curr_dir)
-
-vim.command('return %r' % os.path.realpath('.'))
+else:
+  vim.command('return %r' % os.path.realpath('.'))
 
 EOF
 endfunction
