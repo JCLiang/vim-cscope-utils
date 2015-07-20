@@ -104,7 +104,6 @@ vim.command('cs kill -1')
 ctags_db = LocateIndexDatabaseFile(CTAGS_OUT)
 if ctags_db and os.path.exists(ctags_db):
   vim.command('set tags+=%s' % ctags_db)
-  print 'Loaded ctags database.'
 
 git_repo_path = vim.eval('FindGitRepoPath()')
 src_path = (os.path.dirname(git_repo_path) if git_repo_path.endswith('.git')
@@ -118,14 +117,12 @@ if cscope_db is None:
     cscope_db = cscope_path
     src_path = ''
 if cscope_db and os.path.exists(cscope_db):
-  vim.command('cs add %s %s' % (cscope_db, src_path))
-  print 'Loaded cscope database.'
+  vim.command('silent cs add %s %s' % (cscope_db, src_path))
 
 # Load pycscope index database.
 pycscope_db = LocateIndexDatabaseFile(PYCSCOPE_OUT)
 if pycscope_db and os.path.exists(pycscope_db):
-  vim.command('cs add %s %s' % (pycscope_db, src_path))
-  print 'Loaded pycscope database.'
+  vim.command('silent cs add %s %s' % (pycscope_db, src_path))
 
 EOF
 endfunction
