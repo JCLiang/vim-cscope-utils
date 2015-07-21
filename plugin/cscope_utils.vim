@@ -73,11 +73,19 @@ function! ConnectCscopeDatabase()
 python << EOF
 
 import os
+import sys
 import vim
 
 CTAGS_OUT = 'tags'
 CSCOPE_OUT = 'cscope.out'
 PYCSCOPE_OUT = 'pycscope.out'
+
+
+def Debug(*args, **kwargs):
+  """Prints debug message when CscopeUtilsVerbosity is set."""
+  if vim.vars['CscopeUtilsVerbosity']:
+    sys.stdout.write(*args, **kwargs)
+
 
 def LocateIndexDatabaseFile(file_name):
   """
@@ -104,7 +112,7 @@ vim.command('cs kill -1')
 ctags_db = LocateIndexDatabaseFile(CTAGS_OUT)
 if ctags_db and os.path.exists(ctags_db):
   vim.command('set tags+=%s' % ctags_db)
-  print 'Loaded ctags database.'
+  Debug('Loaded ctags database.')
 
 git_repo_path = vim.eval('FindGitRepoPath()')
 src_path = (os.path.dirname(git_repo_path) if git_repo_path.endswith('.git')
@@ -119,13 +127,13 @@ if cscope_db is None:
     src_path = ''
 if cscope_db and os.path.exists(cscope_db):
   vim.command('cs add %s %s' % (cscope_db, src_path))
-  print 'Loaded cscope database.'
+  Debug('Loaded cscope database.')
 
 # Load pycscope index database.
 pycscope_db = LocateIndexDatabaseFile(PYCSCOPE_OUT)
 if pycscope_db and os.path.exists(pycscope_db):
   vim.command('cs add %s %s' % (pycscope_db, src_path))
-  print 'Loaded pycscope database.'
+  Debug('Loaded pycscope database.')
 
 EOF
 endfunction
@@ -254,5 +262,6 @@ nnoremap <leader>cs :call call(function('BuildCscopeDatabase'), [])<CR>
 nnoremap <leader>cc :call call(function('ConnectCscopeDatabase'), [])<CR>
 
 if has("cscope")
+  let g:CscopeUtilsVerbosity = 0
   call ConnectCscopeDatabase()
 endif
