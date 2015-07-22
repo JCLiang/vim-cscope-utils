@@ -38,7 +38,10 @@ Returns:
 import subprocess
 
 try:
-  branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+  with open(os.devnull, 'w') as f:
+    branch = subprocess.check_output(
+        ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+        stderr=f)
   vim.command('return %r' % branch.strip().replace('/', '_'))
 except:
   vim.command('return ""')
