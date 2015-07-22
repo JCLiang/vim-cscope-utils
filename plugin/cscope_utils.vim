@@ -84,14 +84,14 @@ CSCOPE_OUT = 'cscope.out'
 PYCSCOPE_OUT = 'pycscope.out'
 
 def VimCommand(command):
-  if not vim.vars['CscopeUtilsVerbosity']:
-    command = "silent "+command
+  if not vim.vars['cscope_utils_verbosity']:
+    command = "silent " + command
   vim.command(command)
 
 
 def Debug(*args, **kwargs):
-  """Prints debug message when CscopeUtilsVerbosity is set."""
-  if vim.vars['CscopeUtilsVerbosity']:
+  """Prints debug message when cscope_utils_verbosity is set."""
+  if vim.vars['cscope_utils_verbosity']:
     sys.stdout.write(*args, **kwargs)
 
 
@@ -277,6 +277,6 @@ nnoremap <leader>pcs :call call(function('BuildCscopeDatabase'), [0, 0, 1])<CR>
 nnoremap <leader>cc :call call(function('ConnectCscopeDatabase'), [])<CR>
 
 if has("cscope")
-  let g:CscopeUtilsVerbosity = 0
+  let g:cscope_utils_verbosity = 0
   call ConnectCscopeDatabase()
 endif
