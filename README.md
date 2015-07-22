@@ -28,21 +28,23 @@ please refer to the Notes section for further information.
 1. Install the plugin with your favorite vim bundle manager.
 2. Change dir to your source code directory.
 3. Open up vim.
-4. Hit *&lt;leader&gt;cs* to build and load all the database for the current git
+4. Hit *&lt;leader&gt;ca* to build and load all the database for the current git
     branch.
-5. Open up source files, and happy code tracing with *ctrl + ]* and *ctrl + T*.
-6. If you switch to another git branch, you can use *&lt;leader&gt;cc* to reconnect
-    to the databases you previous built.
-7. More infos can be found in vim with *:help cscope*.
+5. You can also use *&lt;leader&gt;ct*, *&lt;leader&gt;cs*, *&lt;leader&gt;pcs*
+    to (re-)build only ctags, cscope, or pycscope database, respectively.
+6. Open up source files, and happy code tracing with *ctrl + ]* and *ctrl + T*.
+7. If you switch to another git branch, you can use *&lt;leader&gt;cc* to
+    reconnect to the databases you previous built.
+8. More infos can be found in vim with *:help cscope*.
 
 
-## When you hit *&lt;leader&gt;cs* in vim, a function is called to do the following:
+## When you hit *&lt;leader&gt;ca* in vim, a function is called to do the following:
 
 1. Look for the *.git* directory, starting from current working directory and
     going up the directory tree until *.git* is found or '/' is reached.
 2. In the directory found in 1., look for or create the directory
-    *index_db/&lt;current_branch&gt;*. The generated index databases will be placed
-    in this directory.
+    *index_db/&lt;current_branch&gt;*. The generated index databases will be
+    placed in this directory.
 3. Create ctags index database in the *.git* directory.
 4. Create cscope index database in the *.git* directory for *.c*, *.cc*, *.cpp*,
     *.h* files.

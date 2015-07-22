@@ -148,7 +148,7 @@ endfunction
 
 
 " Rebuilds the cscope database.
-function! BuildCscopeDatabase()
+function! BuildCscopeDatabase(ctags, cscope, pycscope)
 python << EOF
 
 import os
@@ -220,53 +220,60 @@ if os.path.exists(src_path):
   if not os.path.exists(db_path):
     os.makedirs(db_path)
 
-  print 'Building ctags...'
-  try:
-    ctags_files = os.path.join(db_path, CTAGS_FILES)
-    Spawn(ConstructFindArgs('.', ['*'], ctags_files, ignore_paths=ignore_paths),
-          cwd=src_path)
-    Spawn(['ctags', '-L', '%s' % ctags_files, '--tag-relative=yes', '-f',
-          '%s' % os.path.join(db_path, CTAGS_OUT)],
-          cwd=src_path)
-  except CalledProcessError as e:
-    print 'Failed: %s' % e
-  except OSError as e:
-    print 'Failed: %s' % e
+  if vim.bindeval('a:')['ctags']:
+    print 'Building ctags...'
+    try:
+      ctags_files = os.path.join(db_path, CTAGS_FILES)
+      Spawn(ConstructFindArgs('.', ['*'], ctags_files,
+                              ignore_paths=ignore_paths),
+            cwd=src_path)
+      Spawn(['ctags', '-L', '%s' % ctags_files, '--tag-relative=yes', '-f',
+            '%s' % os.path.join(db_path, CTAGS_OUT)],
+            cwd=src_path)
+    except CalledProcessError as e:
+      print 'Failed: %s' % e
+    except OSError as e:
+      print 'Failed: %s' % e
 
-  print 'Building cscope...'
-  try:
-    cscope_files = os.path.join(db_path, CSCOPE_FILES)
-    Spawn(ConstructFindArgs('.', ['*.c', '*.cc', '*.cpp', '*.h'], cscope_files,
-                            ignore_paths=ignore_paths),
-          cwd=src_path)
-    Spawn(['cscope', '-bqk', '-i', '%s' % cscope_files, '-f',
-           '%s' % os.path.join(db_path, CSCOPE_OUT)],
-          cwd=src_path)
-  except CalledProcessError as e:
-    print 'Failed: %s' % e
-  except OSError as e:
-    print 'Failed: %s' % e
+  if vim.bindeval('a:')['cscope']:
+    print 'Building cscope...'
+    try:
+      cscope_files = os.path.join(db_path, CSCOPE_FILES)
+      Spawn(ConstructFindArgs('.', ['*.c', '*.cc', '*.cpp', '*.h'],
+                              cscope_files, ignore_paths=ignore_paths),
+            cwd=src_path)
+      Spawn(['cscope', '-bqk', '-i', '%s' % cscope_files, '-f',
+             '%s' % os.path.join(db_path, CSCOPE_OUT)],
+            cwd=src_path)
+    except CalledProcessError as e:
+      print 'Failed: %s' % e
+    except OSError as e:
+      print 'Failed: %s' % e
 
-  print 'Building pycscope...'
-  try:
-    pycscope_files = os.path.join(db_path, PYCSCOPE_FILES)
-    Spawn(ConstructFindArgs('.', ['*.py'], pycscope_files,
-                            ignore_paths=ignore_paths),
-          cwd=src_path)
-    Spawn(['pycscope', '-i', '%s' % pycscope_files,
-           '-f', '%s' % os.path.join(db_path, PYCSCOPE_OUT)],
-          cwd=src_path)
-  except CalledProcessError as e:
-    print 'Failed: %s' % e
-  except OSError as e:
-    print 'Failed: %s' % e
+  if vim.bindeval('a:')['pycscope']:
+    print 'Building pycscope...'
+    try:
+      pycscope_files = os.path.join(db_path, PYCSCOPE_FILES)
+      Spawn(ConstructFindArgs('.', ['*.py'], pycscope_files,
+                              ignore_paths=ignore_paths),
+            cwd=src_path)
+      Spawn(['pycscope', '-i', '%s' % pycscope_files,
+             '-f', '%s' % os.path.join(db_path, PYCSCOPE_OUT)],
+            cwd=src_path)
+    except CalledProcessError as e:
+      print 'Failed: %s' % e
+    except OSError as e:
+      print 'Failed: %s' % e
 
   vim.command('call ConnectCscopeDatabase()')
 
 EOF
 endfunction
 
-nnoremap <leader>cs :call call(function('BuildCscopeDatabase'), [])<CR>
+nnoremap <leader>ca :call call(function('BuildCscopeDatabase'), [1, 1, 1])<CR>
+nnoremap <leader>ct :call call(function('BuildCscopeDatabase'), [1, 0, 0])<CR>
+nnoremap <leader>cs :call call(function('BuildCscopeDatabase'), [0, 1, 0])<CR>
+nnoremap <leader>pcs :call call(function('BuildCscopeDatabase'), [0, 0, 1])<CR>
 nnoremap <leader>cc :call call(function('ConnectCscopeDatabase'), [])<CR>
 
 if has("cscope")
