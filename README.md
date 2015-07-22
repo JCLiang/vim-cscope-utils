@@ -57,3 +57,8 @@ please refer to the Notes section for further information.
     directory and list all the path patterns you want to ignore in it.
 2. If *.git* directory is not found, then the index database files would be
     created in the current working directory.
+3. You can specify a list of extra arguments to the ctags/cscope/pycscope
+    command to build the index file in your .vimrc using the
+    *g:cscope_utils_[ctags|cscope|pycscope]_extra_args* variable. For example,
+    setting *g:cscope_utils_ctags_extra_args* to *["--fields=+l"]* will add
+    *--fields=+l* to the ctags arguments.

@@ -227,8 +227,9 @@ if os.path.exists(src_path):
       Spawn(ConstructFindArgs('.', ['*'], ctags_files,
                               ignore_paths=ignore_paths),
             cwd=src_path)
+      extra_args = list(vim.vars['cscope_utils_ctags_extra_args'])
       Spawn(['ctags', '-L', '%s' % ctags_files, '--tag-relative=yes', '-f',
-            '%s' % os.path.join(db_path, CTAGS_OUT)],
+            '%s' % os.path.join(db_path, CTAGS_OUT)] + extra_args,
             cwd=src_path)
     except CalledProcessError as e:
       print 'Failed: %s' % e
@@ -242,8 +243,9 @@ if os.path.exists(src_path):
       Spawn(ConstructFindArgs('.', ['*.c', '*.cc', '*.cpp', '*.h'],
                               cscope_files, ignore_paths=ignore_paths),
             cwd=src_path)
+      extra_args = list(vim.vars['cscope_utils_cscope_extra_args'])
       Spawn(['cscope', '-bqk', '-i', '%s' % cscope_files, '-f',
-             '%s' % os.path.join(db_path, CSCOPE_OUT)],
+             '%s' % os.path.join(db_path, CSCOPE_OUT)] + extra_args,
             cwd=src_path)
     except CalledProcessError as e:
       print 'Failed: %s' % e
@@ -257,8 +259,9 @@ if os.path.exists(src_path):
       Spawn(ConstructFindArgs('.', ['*.py'], pycscope_files,
                               ignore_paths=ignore_paths),
             cwd=src_path)
+      extra_args = list(vim.vars['cscope_utils_pycscope_extra_args'])
       Spawn(['pycscope', '-i', '%s' % pycscope_files,
-             '-f', '%s' % os.path.join(db_path, PYCSCOPE_OUT)],
+             '-f', '%s' % os.path.join(db_path, PYCSCOPE_OUT)] + extra_args,
             cwd=src_path)
     except CalledProcessError as e:
       print 'Failed: %s' % e
@@ -277,6 +280,17 @@ nnoremap <leader>pcs :call call(function('BuildCscopeDatabase'), [0, 0, 1])<CR>
 nnoremap <leader>cc :call call(function('ConnectCscopeDatabase'), [])<CR>
 
 if has("cscope")
-  let g:cscope_utils_verbosity = 0
+  if !exists("g:cscope_utils_verbosity")
+    let g:cscope_utils_verbosity = 0
+  endif
+  if !exists("g:cscope_utils_ctags_extra_args")
+    let g:cscope_utils_ctags_extra_args = []
+  endif
+  if !exists("g:cscope_utils_cscope_extra_args")
+    let g:cscope_utils_cscope_extra_args = []
+  endif
+  if !exists("g:cscope_utils_pycscope_extra_args")
+    let g:cscope_utils_pycscope_extra_args = []
+  endif
   call ConnectCscopeDatabase()
 endif
