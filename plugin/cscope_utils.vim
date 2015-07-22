@@ -83,6 +83,11 @@ CTAGS_OUT = 'tags'
 CSCOPE_OUT = 'cscope.out'
 PYCSCOPE_OUT = 'pycscope.out'
 
+def VimCommand(command):
+  if not vim.vars['CscopeUtilsVerbosity']:
+    command = "silent "+command
+  vim.command(command)
+
 
 def Debug(*args, **kwargs):
   """Prints debug message when CscopeUtilsVerbosity is set."""
@@ -109,12 +114,12 @@ def LocateIndexDatabaseFile(file_name):
   return None
 
 # Kill all cscope connections first.
-vim.command('cs kill -1')
+VimCommand('cs kill -1')
 
 # Load ctags index database.
 ctags_db = LocateIndexDatabaseFile(CTAGS_OUT)
 if ctags_db and os.path.exists(ctags_db):
-  vim.command('set tags+=%s' % ctags_db)
+  VimCommand('set tags+=%s' % ctags_db)
   Debug('Loaded ctags database.')
 
 git_repo_path = vim.eval('FindGitRepoPath()')
@@ -129,13 +134,13 @@ if cscope_db is None:
     cscope_db = cscope_path
     src_path = ''
 if cscope_db and os.path.exists(cscope_db):
-  vim.command('cs add %s %s' % (cscope_db, src_path))
+  VimCommand('cs add %s %s' % (cscope_db, src_path))
   Debug('Loaded cscope database.')
 
 # Load pycscope index database.
 pycscope_db = LocateIndexDatabaseFile(PYCSCOPE_OUT)
 if pycscope_db and os.path.exists(pycscope_db):
-  vim.command('cs add %s %s' % (pycscope_db, src_path))
+  VimCommand('cs add %s %s' % (pycscope_db, src_path))
   Debug('Loaded pycscope database.')
 
 EOF
