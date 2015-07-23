@@ -220,7 +220,7 @@ if os.path.exists(src_path):
   if not os.path.exists(db_path):
     os.makedirs(db_path)
 
-  if vim.bindeval('a:')['ctags']:
+  if vim.eval('a:')['ctags'] == '1':
     print 'Building ctags...'
     try:
       ctags_files = os.path.join(db_path, CTAGS_FILES)
@@ -236,7 +236,7 @@ if os.path.exists(src_path):
     except OSError as e:
       print 'Failed: %s' % e
 
-  if vim.bindeval('a:')['cscope']:
+  if vim.eval('a:')['cscope'] == '1':
     print 'Building cscope...'
     try:
       cscope_files = os.path.join(db_path, CSCOPE_FILES)
@@ -252,7 +252,7 @@ if os.path.exists(src_path):
     except OSError as e:
       print 'Failed: %s' % e
 
-  if vim.bindeval('a:')['pycscope']:
+  if vim.eval('a:')['pycscope'] == '1':
     print 'Building pycscope...'
     try:
       pycscope_files = os.path.join(db_path, PYCSCOPE_FILES)
