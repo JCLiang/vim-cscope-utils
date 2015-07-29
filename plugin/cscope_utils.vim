@@ -245,13 +245,13 @@ if os.path.exists(src_path):
         print 'Building ctags...'
         try:
             ctags_files = os.path.join(db_path, CTAGS_FILES)
-            Spawn(ConstructFindArgs('.', ['*'], ctags_files,
-                                    ignore_paths=ignore_paths),
-                  cwd=src_path)
+            Spawn(ConstructFindArgs(os.path.relpath(src_path, db_path), ['*'],
+                                    ctags_files, ignore_paths=ignore_paths),
+                  cwd=db_path)
             extra_args = list(vim.vars['cscope_utils_ctags_extra_args'])
-            Spawn(['ctags', '-L', '%s' % ctags_files, '--tag-relative=yes',
+            Spawn(['ctags', '-L', '%s' % ctags_files,
                    '-f', '%s' % os.path.join(db_path, CTAGS_OUT)] + extra_args,
-                  cwd=src_path)
+                  cwd=db_path)
         except subprocess.CalledProcessError as e:
             print 'Failed: %s' % e
         except OSError as e:
