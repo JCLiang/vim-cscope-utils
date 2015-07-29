@@ -187,7 +187,7 @@ def Spawn(args, cwd=None):
     """A wrapper for subprocess.Popen to filter command outputs."""
     process = subprocess.Popen(args, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, close_fds=True, cwd=cwd)
-    process.stdout, process.stderr = process.communicate()
+    process.stdout_data, process.stderr_data = process.communicate()
     return process
 
 
