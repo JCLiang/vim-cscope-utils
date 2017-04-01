@@ -4,8 +4,16 @@
 "
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+function! s:UsingPython2()
+  if has('python')
+    return 1
+  endif
+  return 0
+endfunction
+let s:python_until_eof = s:UsingPython2() ? "python << EOF" : "python3 << EOF"
+
 function! FindGitRepoPath()
-python << EOF
+exec s:python_until_eof
 
 """Find the path to the .git directory.
 
@@ -13,6 +21,8 @@ Returns:
     The full path to the .git directory, or current working directory if the
     .git directory is not found.
 """
+
+from __future__ import print_function
 import os
 
 curr_dir = vim.current.buffer.name or os.getcwd()
@@ -30,7 +40,7 @@ endfunction
 
 
 function! GetCurrentGitBranch()
-python << EOF
+exec s:python_until_eof
 
 """Get the name of the current git branch.
 
@@ -38,6 +48,7 @@ Returns:
     The name of the current git branch.
 """
 
+from __future__ import print_function
 import subprocess
 
 try:
@@ -54,7 +65,7 @@ endfunction
 
 
 function! GetIndexDatabasePath()
-python << EOF
+exec s:python_until_eof
 
 """Get the path to the index database.
 
@@ -66,6 +77,7 @@ Returns:
     The path to the index database.
 """
 
+from __future__ import print_function
 import os
 
 INDEX_DB_DIR = 'index_db'
@@ -80,10 +92,11 @@ endfunction
 
 " Adds the cscope databse found.
 function! ConnectCscopeDatabase()
-python << EOF
+exec s:python_until_eof
 
 """Locates and connects existing ctags, cscope, and pycscope databases."""
 
+from __future__ import print_function
 import os
 import sys
 
@@ -159,7 +172,7 @@ endfunction
 
 " Rebuilds the cscope database.
 function! BuildCscopeDatabase(ctags, cscope, pycscope)
-python << EOF
+exec s:python_until_eof
 
 """Builds ctags, cscope, and pycscope databases.
 
@@ -169,6 +182,7 @@ Args:
     pycscope: 1 to build pycscope database; 0 otherwise.
 """
 
+from __future__ import print_function
 import os
 import subprocess
 
@@ -242,7 +256,7 @@ if os.path.exists(src_path):
         os.makedirs(db_path)
 
     if vim.eval('a:')['ctags'] == '1':
-        print 'Building ctags...'
+        print('Building ctags...')
         try:
             ctags_files = os.path.join(db_path, CTAGS_FILES)
             Spawn(ConstructFindArgs(os.path.relpath(src_path, db_path), ['*'],
@@ -253,12 +267,12 @@ if os.path.exists(src_path):
                    '-f', '%s' % os.path.join(db_path, CTAGS_OUT)] + extra_args,
                   cwd=db_path)
         except subprocess.CalledProcessError as e:
-            print 'Failed: %s' % e
+            print('Failed: %s' % e)
         except OSError as e:
-            print 'Failed: %s' % e
+            print('Failed: %s' % e)
 
     if vim.eval('a:')['cscope'] == '1':
-        print 'Building cscope...'
+        print('Building cscope...')
         try:
             cscope_files = os.path.join(db_path, CSCOPE_FILES)
             Spawn(ConstructFindArgs('.', ['*.c', '*.cc', '*.cpp', '*.h'],
@@ -269,12 +283,12 @@ if os.path.exists(src_path):
                    '%s' % os.path.join(db_path, CSCOPE_OUT)] + extra_args,
                   cwd=src_path)
         except subprocess.CalledProcessError as e:
-            print 'Failed: %s' % e
+            print('Failed: %s' % e)
         except OSError as e:
-            print 'Failed: %s' % e
+            print('Failed: %s' % e)
 
     if vim.eval('a:')['pycscope'] == '1':
-        print 'Building pycscope...'
+        print('Building pycscope...')
         try:
             pycscope_files = os.path.join(db_path, PYCSCOPE_FILES)
             Spawn(ConstructFindArgs('.', ['*.py'], pycscope_files,
@@ -285,9 +299,9 @@ if os.path.exists(src_path):
                    '-f', '%s' % os.path.join(db_path, PYCSCOPE_OUT)] + extra_args,
                   cwd=src_path)
         except subprocess.CalledProcessError as e:
-            print 'Failed: %s' % e
+            print('Failed: %s' % e)
         except OSError as e:
-            print 'Failed: %s' % e
+            print('Failed: %s' % e)
 
     vim.command('call ConnectCscopeDatabase()')
 
