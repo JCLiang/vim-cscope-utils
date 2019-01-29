@@ -261,7 +261,7 @@ if os.path.exists(src_path):
         print 'Building cscope...'
         try:
             cscope_files = os.path.join(db_path, CSCOPE_FILES)
-            Spawn(ConstructFindArgs('.', ['*.c', '*.cc', '*.cpp', '*.h'],
+            Spawn(ConstructFindArgs('.', ['*.c', '*.cc', '*.cpp', '*.h', '*.l', '*.y'],
                                     cscope_files, ignore_paths=ignore_paths),
                   cwd=src_path)
             extra_args = list(vim.vars['cscope_utils_cscope_extra_args'])
